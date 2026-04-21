@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill History | Textile Shop</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="brand">🧵 Textile Billing System</div>
+    <div class="nav-links">
+        <a href="index.html">Products</a>
+        <a href="billing.html">New Bill</a>
+        <a href="bills.html" class="active">Bill History</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="page-header">
+        <h1>Bill History</h1>
+    </div>
+
+    <!-- SUMMARY STATS -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-value" id="totalBills">-</div>
+            <div class="stat-label">Total Bills</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="totalRevenue">-</div>
+            <div class="stat-label">Total Revenue</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="totalGst">-</div>
+            <div class="stat-label">Total GST Collected</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="avgBill">-</div>
+            <div class="stat-label">Avg Bill Value</div>
+        </div>
+    </div>
+
+    <!-- BILLS TABLE -->
+    <div class="card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Bill #</th>
+                    <th>Date & Time</th>
+                    <th>Items</th>
+                    <th>Subtotal</th>
+                    <th>GST</th>
+                    <th>Discount</th>
+                    <th>Net Amount</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="billsBody">
+                <tr><td colspan="8" class="loading">Loading bills...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- BILL DETAIL MODAL -->
+<div id="detailModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <div class="invoice" id="detailContent">
+            <div class="invoice-header">
+                <h2>🧵 Textile Shop</h2>
+                <p>Invoice Detail</p>
+            </div>
+            <div class="invoice-meta">
+                <span id="detBillNo"></span>
+                <span id="detDate"></span>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr>
+                </thead>
+                <tbody id="detItems"></tbody>
+            </table>
+            <div class="invoice-summary">
+                <div class="summary-row"><span>Subtotal</span><span id="detSub"></span></div>
+                <div class="summary-row"><span>GST</span><span id="detGst"></span></div>
+                <div class="summary-row"><span>Discount</span><span id="detDisc"></span></div>
+                <hr>
+                <div class="summary-row total-row">
+                    <strong>Net Payable</strong><strong id="detNet"></strong>
+                </div>
+            </div>
+            <p class="invoice-footer">Thank you for shopping with us! 🙏</p>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="window.print()">🖨️ Print</button>
+            <button class="btn btn-primary" onclick="document.getElementById('detailModal').style.display='none'">✅ Close</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<script src="js/app.js"></script>
+<script>
+    const API = 'http://localhost:8080/api/bills';
+
+    window.onload = loadBills;
+
+    async function loadBills() {
+        try {
+            const res  = await fetch(API);
+            const bills = await res.json();
+            renderStats(bills);
+            renderBills(bills);
+        } catch {
+            showToast('Cannot connect to server.', 'error');
+        }
+    }
+
+    /** Render summary stat cards */
+    function renderStats(bills) {
+        const total   = bills.reduce((s, b) => s + b.netAmount, 0);
+        const gst     = bills.reduce((s, b) => s + b.gstAmount, 0);
+        document.getElementById('totalBills').textContent   = bills.length;
+        document.getElementById('totalRevenue').textContent = `₹${total.toFixed(0)}`;
+        document.getElementById('totalGst').textContent     = `₹${gst.toFixed(0)}`;
+        document.getElementById('avgBill').textContent      =
+            bills.length ? `₹${(total / bills.length).toFixed(0)}` : '₹0';
+    }
+
+    function renderBills(bills) {
+        const tbody = document.getElementById('billsBody');
+        if (bills.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="loading">No bills generated yet.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = [...bills].reverse().map(b => `
+            <tr>
+                <td><strong>#${b.id}</strong></td>
+                <td>${new Date(b.billDate).toLocaleString('en-IN')}</td>
+                <td>${b.billItems ? b.billItems.length : '-'} items</td>
+                <td>₹${b.totalAmount.toFixed(2)}</td>
+                <td>₹${b.gstAmount.toFixed(2)}</td>
+                <td>₹${b.discountAmount.toFixed(2)}</td>
+                <td><strong>₹${b.netAmount.toFixed(2)}</strong></td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="viewBill(${b.id})">
+                        👁️ View
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function viewBill(id) {
+        try {
+            const res  = await fetch(`${API}/${id}`);
+            const bill = await res.json();
+
+            document.getElementById('detBillNo').textContent = `Bill #${bill.id}`;
+            document.getElementById('detDate').textContent   =
+                new Date(bill.billDate).toLocaleString('en-IN');
+            document.getElementById('detSub').textContent   = `₹${bill.totalAmount.toFixed(2)}`;
+            document.getElementById('detGst').textContent   = `₹${bill.gstAmount.toFixed(2)}`;
+            document.getElementById('detDisc').textContent  = `₹${bill.discountAmount.toFixed(2)}`;
+            document.getElementById('detNet').textContent   = `₹${bill.netAmount.toFixed(2)}`;
+
+            document.getElementById('detItems').innerHTML = bill.billItems.map(item => `
+                <tr>
+                    <td>${item.product.name}</td>
+                    <td>${item.quantity}</td>
+                    <td>₹${item.unitPrice.toFixed(2)}</td>
+                    <td>₹${item.totalPrice.toFixed(2)}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('detailModal').style.display = 'flex';
+        } catch {
+            showToast('Error loading bill details.', 'error');
+        }
+    }
+</script>
+</body>
+</html>

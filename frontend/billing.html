@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Bill | Textile Shop</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="brand">🧵 Textile Billing System</div>
+    <div class="nav-links">
+        <a href="index.html">Products</a>
+        <a href="billing.html" class="active">New Bill</a>
+        <a href="bills.html">Bill History</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="page-header">
+        <h1>Generate New Bill</h1>
+    </div>
+
+    <div class="billing-grid">
+
+        <!-- LEFT: Product Selector -->
+        <div class="card">
+            <h2>Select Products</h2>
+            <input type="text" id="billSearch" placeholder="🔍 Search products..."
+                   oninput="filterProducts()" class="mb-1" />
+            <div id="productList" class="product-select-list">
+                <p class="loading">Loading products...</p>
+            </div>
+        </div>
+
+        <!-- RIGHT: Cart + Bill Summary -->
+        <div>
+            <!-- CART -->
+            <div class="card">
+                <h2>🛒 Cart</h2>
+                <div id="cartEmpty" class="loading">No items added yet.</div>
+                <table class="data-table" id="cartTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Qty</th>
+                            <th>Unit Price</th>
+                            <th>Total</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cartBody"></tbody>
+                </table>
+            </div>
+
+            <!-- BILL SUMMARY -->
+            <div class="card mt-1">
+                <h2>Bill Summary</h2>
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span id="subtotal">₹0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>GST</span>
+                    <span id="gstAmt">₹0.00</span>
+                </div>
+                <div class="summary-row">
+                    <label>Discount %</label>
+                    <input type="number" id="discountPct" value="0" min="0" max="100"
+                           style="width:70px;text-align:right;" oninput="recalculate()" />
+                </div>
+                <div class="summary-row">
+                    <span>Discount Amount</span>
+                    <span id="discountAmt">₹0.00</span>
+                </div>
+                <hr>
+                <div class="summary-row total-row">
+                    <strong>NET PAYABLE</strong>
+                    <strong id="netAmt">₹0.00</strong>
+                </div>
+                <button class="btn btn-primary btn-block mt-1"
+                        onclick="generateBill()">🧾 Generate Bill</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- INVOICE MODAL (shown after bill is created) -->
+<div id="invoiceModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <div class="invoice" id="invoiceContent">
+            <div class="invoice-header">
+                <h2>🧵 Textile Shop</h2>
+                <p>Invoice</p>
+            </div>
+            <div class="invoice-meta">
+                <span id="invBillNo"></span>
+                <span id="invDate"></span>
+            </div>
+            <table class="data-table" id="invItemTable">
+                <thead>
+                    <tr><th>Product</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+                </thead>
+                <tbody id="invItems"></tbody>
+            </table>
+            <div class="invoice-summary">
+                <div class="summary-row"><span>Subtotal</span><span id="invSubtotal"></span></div>
+                <div class="summary-row"><span>GST</span><span id="invGst"></span></div>
+                <div class="summary-row"><span>Discount</span><span id="invDiscount"></span></div>
+                <hr>
+                <div class="summary-row total-row">
+                    <strong>Total Payable</strong>
+                    <strong id="invNet"></strong>
+                </div>
+            </div>
+            <p class="invoice-footer">Thank you for shopping with us! 🙏</p>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="window.print()">🖨️ Print</button>
+            <button class="btn btn-primary" onclick="closeInvoice()">✅ Done</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<script src="js/app.js"></script>
+<script>
+    const PRODUCTS_API = 'http://localhost:8080/api/products';
+    const BILLS_API    = 'http://localhost:8080/api/bills';
+
+    let allProducts = [];
+    // cart: { productId, name, quantity, unitPrice, gstPercent }
+    let cart = [];
+
+    // Load products when page opens
+    window.onload = async () => {
+        try {
+            const res = await fetch(PRODUCTS_API);
+            allProducts = await res.json();
+            renderProductList(allProducts);
+        } catch {
+            showToast('Cannot connect to server.', 'error');
+        }
+    };
+
+    /** Render the product selection list (left panel) */
+    function renderProductList(products) {
+        const div = document.getElementById('productList');
+        if (products.length === 0) {
+            div.innerHTML = '<p class="loading">No products found.</p>';
+            return;
+        }
+        div.innerHTML = products.map(p => `
+            <div class="product-card ${p.quantity === 0 ? 'out-of-stock' : ''}">
+                <div class="product-info">
+                    <strong>${p.name}</strong>
+                    <small>₹${p.price} | Stock: ${p.quantity}</small>
+                </div>
+                <div class="qty-control">
+                    <input type="number" id="qty_${p.id}" value="1" min="1"
+                           max="${p.quantity}" style="width:55px;" />
+                    <button class="btn btn-sm btn-primary"
+                            onclick="addToCart(${p.id})"
+                            ${p.quantity === 0 ? 'disabled' : ''}>
+                        ${p.quantity === 0 ? 'Out of Stock' : '+ Add'}
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    /** Filter product list by name search */
+    function filterProducts() {
+        const q = document.getElementById('billSearch').value.toLowerCase();
+        const filtered = allProducts.filter(p => p.name.toLowerCase().includes(q));
+        renderProductList(filtered);
+    }
+
+    /**
+     * ADD TO CART
+     * Adds product with entered quantity to cart array, then updates UI
+     */
+    function addToCart(productId) {
+        const product = allProducts.find(p => p.id === productId);
+        const qtyInput = document.getElementById(`qty_${productId}`);
+        const qty = parseInt(qtyInput.value);
+
+        if (!qty || qty < 1) { showToast('Enter valid quantity', 'error'); return; }
+        if (qty > product.quantity) {
+            showToast(`Only ${product.quantity} in stock!`, 'error'); return;
+        }
+
+        // Check if already in cart → update quantity
+        const existing = cart.find(c => c.productId === productId);
+        if (existing) {
+            existing.quantity += qty;
+            if (existing.quantity > product.quantity) {
+                existing.quantity = product.quantity;
+                showToast('Quantity capped to available stock.', 'warning');
+            }
+        } else {
+            cart.push({
+                productId: product.id,
+                name: product.name,
+                quantity: qty,
+                unitPrice: product.price,
+                gstPercent: product.gstPercent || 5
+            });
+        }
+        renderCart();
+        showToast(`${product.name} added to cart`, 'success');
+    }
+
+    /** Render the cart table */
+    function renderCart() {
+        const tbody = document.getElementById('cartBody');
+        if (cart.length === 0) {
+            document.getElementById('cartEmpty').style.display = 'block';
+            document.getElementById('cartTable').style.display = 'none';
+            resetSummary();
+            return;
+        }
+        document.getElementById('cartEmpty').style.display = 'none';
+        document.getElementById('cartTable').style.display = 'table';
+
+        tbody.innerHTML = cart.map((item, i) => `
+            <tr>
+                <td>${item.name}</td>
+                <td>
+                    <input type="number" value="${item.quantity}" min="1"
+                           style="width:55px;"
+                           onchange="updateQty(${i}, this.value)" />
+                </td>
+                <td>₹${item.unitPrice.toFixed(2)}</td>
+                <td>₹${(item.unitPrice * item.quantity).toFixed(2)}</td>
+                <td><button class="btn btn-sm btn-danger" onclick="removeFromCart(${i})">✕</button></td>
+            </tr>
+        `).join('');
+        recalculate();
+    }
+
+    function updateQty(index, val) {
+        const qty = parseInt(val);
+        if (qty < 1) return;
+        cart[index].quantity = qty;
+        recalculate();
+    }
+
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        renderCart();
+    }
+
+    /**
+     * RECALCULATE BILL TOTALS
+     * Called whenever cart or discount changes
+     */
+    function recalculate() {
+        let subtotal = 0, gstTotal = 0;
+        cart.forEach(item => {
+            const lineTotal = item.unitPrice * item.quantity;
+            subtotal += lineTotal;
+            gstTotal += (lineTotal * item.gstPercent) / 100;
+        });
+        const discPct = parseFloat(document.getElementById('discountPct').value) || 0;
+        const discAmt = (subtotal * discPct) / 100;
+        const net = subtotal + gstTotal - discAmt;
+
+        document.getElementById('subtotal').textContent    = `₹${subtotal.toFixed(2)}`;
+        document.getElementById('gstAmt').textContent      = `₹${gstTotal.toFixed(2)}`;
+        document.getElementById('discountAmt').textContent = `₹${discAmt.toFixed(2)}`;
+        document.getElementById('netAmt').textContent      = `₹${net.toFixed(2)}`;
+    }
+
+    function resetSummary() {
+        ['subtotal','gstAmt','discountAmt','netAmt'].forEach(id =>
+            document.getElementById(id).textContent = '₹0.00');
+    }
+
+    /**
+     * GENERATE BILL
+     * Sends POST /api/bills with cart data
+     */
+    async function generateBill() {
+        if (cart.length === 0) { showToast('Cart is empty!', 'error'); return; }
+
+        const discountPercent = parseFloat(document.getElementById('discountPct').value) || 0;
+        const payload = {
+            discountPercent,
+            items: cart.map(item => ({
+                productId: item.productId,
+                quantity: item.quantity
+            }))
+        };
+
+        try {
+            const res = await fetch(BILLS_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                const bill = await res.json();
+                showInvoice(bill);
+                cart = [];           // Clear cart after successful billing
+                renderCart();
+                // Reload product list to reflect updated stock
+                const pRes = await fetch(PRODUCTS_API);
+                allProducts = await pRes.json();
+                renderProductList(allProducts);
+            } else {
+                const err = await res.json();
+                showToast(err.error || 'Error creating bill', 'error');
+            }
+        } catch {
+            showToast('Server error. Try again.', 'error');
+        }
+    }
+
+    /** Show invoice modal after successful bill creation */
+    function showInvoice(bill) {
+        document.getElementById('invBillNo').textContent = `Bill #${bill.id}`;
+        document.getElementById('invDate').textContent   =
+            new Date(bill.billDate).toLocaleString('en-IN');
+        document.getElementById('invSubtotal').textContent = `₹${bill.totalAmount.toFixed(2)}`;
+        document.getElementById('invGst').textContent      = `₹${bill.gstAmount.toFixed(2)}`;
+        document.getElementById('invDiscount').textContent = `₹${bill.discountAmount.toFixed(2)}`;
+        document.getElementById('invNet').textContent      = `₹${bill.netAmount.toFixed(2)}`;
+
+        document.getElementById('invItems').innerHTML = bill.billItems.map(item => `
+            <tr>
+                <td>${item.product.name}</td>
+                <td>${item.quantity}</td>
+                <td>₹${item.unitPrice.toFixed(2)}</td>
+                <td>₹${item.totalPrice.toFixed(2)}</td>
+            </tr>
+        `).join('');
+
+        document.getElementById('invoiceModal').style.display = 'flex';
+    }
+
+    function closeInvoice() {
+        document.getElementById('invoiceModal').style.display = 'none';
+    }
+</script>
+</body>
+</html>
