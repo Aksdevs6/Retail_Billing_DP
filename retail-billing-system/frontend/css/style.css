@@ -1,0 +1,210 @@
+/* =============================================================
+   RETAIL BILLING SYSTEM - STYLESHEET
+   Textile Shop UI
+   ============================================================= */
+
+/* ── RESET & BASE ─────────────────────────────────────────── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    min-height: 100vh;
+}
+
+/* ── NAVBAR ───────────────────────────────────────────────── */
+.navbar {
+    background: linear-gradient(135deg, #1a237e, #283593);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 2rem;
+    height: 60px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    position: sticky; top: 0; z-index: 100;
+}
+.brand { font-size: 1.3rem; font-weight: 700; letter-spacing: 0.5px; }
+.nav-links a {
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    margin-left: 1.5rem;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+}
+.nav-links a:hover, .nav-links a.active {
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+
+/* ── CONTAINER ────────────────────────────────────────────── */
+.container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+/* ── PAGE HEADER ──────────────────────────────────────────── */
+.page-header {
+    display: flex; justify-content: space-between;
+    align-items: center; margin-bottom: 1.5rem;
+}
+.page-header h1 { font-size: 1.6rem; color: #1a237e; }
+
+/* ── CARD ─────────────────────────────────────────────────── */
+.card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    margin-bottom: 1.5rem;
+}
+.card h2 { font-size: 1.1rem; color: #333; margin-bottom: 1rem; border-bottom: 2px solid #e3e8f0; padding-bottom: 0.5rem; }
+
+/* ── FORM ─────────────────────────────────────────────────── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+.form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+.form-group label { font-weight: 600; font-size: 0.9rem; color: #555; }
+.form-group input, input[type="text"], input[type="number"] {
+    padding: 0.55rem 0.8rem;
+    border: 1.5px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: border 0.2s;
+    width: 100%;
+}
+input:focus { outline: none; border-color: #3f51b5; box-shadow: 0 0 0 2px rgba(63,81,181,0.15); }
+.form-actions { display: flex; gap: 0.7rem; margin-top: 0.5rem; }
+.error { color: #e53935; font-size: 0.8rem; }
+
+/* ── BUTTONS ──────────────────────────────────────────────── */
+.btn {
+    padding: 0.55rem 1.2rem;
+    border: none; border-radius: 6px;
+    cursor: pointer; font-size: 0.9rem;
+    font-weight: 600; transition: all 0.2s;
+    display: inline-flex; align-items: center; gap: 0.3rem;
+}
+.btn:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn-primary   { background: #3f51b5; color: white; }
+.btn-success   { background: #2e7d32; color: white; }
+.btn-danger    { background: #c62828; color: white; }
+.btn-warning   { background: #f57f17; color: white; }
+.btn-secondary { background: #78909c; color: white; }
+.btn-sm { padding: 0.3rem 0.75rem; font-size: 0.82rem; }
+.btn-block { width: 100%; justify-content: center; padding: 0.75rem; font-size: 1rem; }
+
+/* ── TABLE ────────────────────────────────────────────────── */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+    background: #e8eaf6; color: #1a237e;
+    padding: 0.75rem 1rem; text-align: left;
+    font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.data-table td { padding: 0.7rem 1rem; border-bottom: 1px solid #f0f2f5; font-size: 0.93rem; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: #f5f7ff; }
+
+/* ── BADGES ───────────────────────────────────────────────── */
+.badge { padding: 0.2rem 0.65rem; border-radius: 12px; font-size: 0.82rem; font-weight: 600; }
+.badge-success { background: #e8f5e9; color: #2e7d32; }
+.badge-danger  { background: #ffebee; color: #c62828; }
+
+/* ── SEARCH BAR ───────────────────────────────────────────── */
+.search-bar { margin-bottom: 1rem; }
+.search-bar input { max-width: 360px; }
+
+/* ── BILLING GRID ─────────────────────────────────────────── */
+.billing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+
+/* ── PRODUCT SELECT LIST ──────────────────────────────────── */
+.product-select-list { max-height: 420px; overflow-y: auto; }
+.product-card {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.65rem 0.8rem; border: 1.5px solid #e0e4f0;
+    border-radius: 8px; margin-bottom: 0.5rem;
+    transition: border-color 0.2s; background: #fafbff;
+}
+.product-card:hover { border-color: #7986cb; }
+.product-card.out-of-stock { opacity: 0.5; background: #fafafa; }
+.product-info { display: flex; flex-direction: column; gap: 0.15rem; }
+.product-info strong { font-size: 0.95rem; }
+.product-info small { color: #777; font-size: 0.82rem; }
+.qty-control { display: flex; gap: 0.5rem; align-items: center; }
+
+/* ── BILL SUMMARY ─────────────────────────────────────────── */
+.summary-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.45rem 0; font-size: 0.95rem;
+}
+.summary-row input { border: 1.5px solid #ddd; border-radius: 5px; padding: 0.3rem 0.5rem; }
+.total-row { font-size: 1.1rem; color: #1a237e; }
+hr { border: none; border-top: 1.5px solid #e0e4f0; margin: 0.5rem 0; }
+
+/* ── STATS ROW ────────────────────────────────────────────── */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.stat-card {
+    background: white; border-radius: 10px; padding: 1.2rem 1.5rem;
+    text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    border-top: 4px solid #3f51b5;
+}
+.stat-value { font-size: 1.7rem; font-weight: 700; color: #1a237e; }
+.stat-label { font-size: 0.85rem; color: #777; margin-top: 0.3rem; }
+
+/* ── MODAL ────────────────────────────────────────────────── */
+.modal {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; padding: 1rem;
+}
+.modal-content {
+    background: white; border-radius: 12px;
+    max-width: 600px; width: 100%;
+    max-height: 90vh; overflow-y: auto;
+    padding: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+.modal-actions { display: flex; gap: 0.7rem; justify-content: flex-end; margin-top: 1.5rem; }
+
+/* ── INVOICE ──────────────────────────────────────────────── */
+.invoice-header { text-align: center; margin-bottom: 1rem; }
+.invoice-header h2 { color: #1a237e; font-size: 1.5rem; }
+.invoice-header p { color: #777; font-size: 0.9rem; }
+.invoice-meta {
+    display: flex; justify-content: space-between;
+    font-size: 0.9rem; color: #555;
+    background: #f5f7ff; padding: 0.6rem 1rem;
+    border-radius: 6px; margin-bottom: 1rem;
+}
+.invoice-summary { margin-top: 1rem; background: #fafbff; padding: 0.8rem; border-radius: 6px; }
+.invoice-footer { text-align: center; color: #777; font-size: 0.9rem; margin-top: 1rem; }
+
+/* ── TOAST ────────────────────────────────────────────────── */
+.toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    background: #323232; color: white;
+    padding: 0.75rem 1.5rem; border-radius: 8px;
+    font-size: 0.9rem; opacity: 0; transition: opacity 0.3s;
+    z-index: 9999; min-width: 200px;
+}
+.toast.show { opacity: 1; }
+.toast.success { background: #2e7d32; }
+.toast.error   { background: #c62828; }
+.toast.warning { background: #e65100; }
+
+/* ── UTILITIES ────────────────────────────────────────────── */
+.loading { text-align: center; color: #aaa; padding: 2rem; font-style: italic; }
+.mt-1 { margin-top: 1rem; }
+.mb-1 { margin-bottom: 1rem; }
+
+/* ── PRINT STYLES ─────────────────────────────────────────── */
+@media print {
+    .navbar, .modal-actions, .btn { display: none !important; }
+    .modal-content { box-shadow: none; padding: 0; }
+}
+
+/* ── RESPONSIVE ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .billing-grid { grid-template-columns: 1fr; }
+    .form-grid    { grid-template-columns: 1fr; }
+    .stats-row    { grid-template-columns: 1fr 1fr; }
+}
